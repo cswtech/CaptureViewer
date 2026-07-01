@@ -58,6 +58,35 @@ flatpak run io.github.chamithshehan.CaptureViewer
 > `gst-inspect-1.0 gtk4paintablesink` fails inside the sandbox, add a
 > `gst-plugin-gtk4` build module to the manifest.
 
+## 4. Build a single-file AppImage
+
+For sharing with someone who doesn't want to run `install-deps.sh` first,
+`build-aux/appimage/build-appimage.sh` bundles the Python interpreter,
+PyGObject, GTK4/libadwaita, GStreamer (core/base/good/bad/ugly/libav +
+`gtk4paintablesink` + PipeWire), and glibc's dynamic linker straight from the
+build machine into one self-contained file:
+
+```bash
+./install-deps.sh   # the build machine needs everything installed once
+./build-aux/appimage/build-appimage.sh
+# -> build-aux/appimage/out/CaptureViewer-x86_64.AppImage
+```
+
+To run it, the recipient just needs `chmod +x` and to double-click it, or:
+
+```bash
+chmod +x CaptureViewer-x86_64.AppImage
+./CaptureViewer-x86_64.AppImage
+# if there's no FUSE (e.g. some containers/older sandboxes):
+./CaptureViewer-x86_64.AppImage --appimage-extract-and-run
+```
+
+**Portability:** the AppImage requires a target glibc at least as new as the
+build machine's — it will *not* run on distros noticeably older than the one
+it was built on. Build on the oldest common distro you can reasonably target
+(ideally in an old-LTS container) for the widest reach; a bleeding-edge build
+machine produces an AppImage that only runs on similarly recent systems.
+
 ## Troubleshooting
 
 - **No devices listed:** confirm the card appears with `v4l2-ctl --list-devices`
@@ -79,4 +108,5 @@ captureviewer/
   config.py          # JSON config in ~/.config/captureviewer/
 data/                # .desktop, AppStream metainfo, icon
 build-aux/flatpak/   # Flatpak manifest
+build-aux/appimage/  # AppImage build script
 ```

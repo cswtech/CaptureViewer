@@ -11,6 +11,11 @@ dist/
 repo/
 build-dir/
 
+# AppImage build artifacts
+build-aux/appimage/AppDir/
+build-aux/appimage/out/
+build-aux/appimage/tools/
+
 # Editors / OS
 .vscode/
 .idea/
