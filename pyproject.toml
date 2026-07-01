@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "captureviewer"
+version = "0.1.0"
+description = "Use a video capture card as a monitor on Linux (GTK4 + GStreamer)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-or-later" }
+# Runtime deps (PyGObject, GStreamer, GTK4, libadwaita) are provided by the
+# system / Flatpak runtime, not pip.
+
+[project.scripts]
+captureviewer = "captureviewer.application:main"
+
+[tool.setuptools]
+packages = ["captureviewer"]

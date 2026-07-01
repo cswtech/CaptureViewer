@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.chamithshehan.CaptureViewer</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Capture Viewer</name>
+  <summary>Use a video capture card as a monitor</summary>
+  <description>
+    <p>
+      Capture Viewer shows the live input of a USB/HDMI video capture card in a
+      window and plays its audio through your default output device — turning a
+      laptop plus a capture card into a portable monitor.
+    </p>
+    <ul>
+      <li>Pick the video capture device and audio source in Settings</li>
+      <li>Low-latency live preview via GStreamer and a GTK4 paintable</li>
+      <li>Automatic reconnect when the capture card is unplugged and replugged</li>
+      <li>Fullscreen toggle (F11) and volume control, remembered between runs</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">io.github.chamithshehan.CaptureViewer.desktop</launchable>
+  <categories>
+    <category>AudioVideo</category>
+    <category>Video</category>
+  </categories>
+  <content_rating type="oars-1.1" />
+  <releases>
+    <release version="0.1.0" date="2026-07-01">
+      <description>
+        <p>Initial release.</p>
+      </description>
+    </release>
+  </releases>
+</component>

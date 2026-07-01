@@ -1,0 +1,33 @@
+id: io.github.chamithshehan.CaptureViewer
+runtime: org.gnome.Platform
+runtime-version: '48'
+sdk: org.gnome.Sdk
+command: captureviewer
+
+finish-args:
+  # Display
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  # Audio in (capture source) and out (default sink), via PipeWire/PulseAudio
+  - --socket=pulseaudio
+  # Access to /dev/video* capture devices (USB capture cards)
+  - --device=all
+
+modules:
+  # gtk4paintablesink lives in gst-plugins-rs. It ships in recent GNOME
+  # runtimes; if `gst-inspect-1.0 gtk4paintablesink` fails inside the sandbox,
+  # add a build module for gst-plugin-gtk4 here.
+  - name: captureviewer
+    buildsystem: simple
+    build-commands:
+      - pip3 install --no-deps --no-build-isolation --prefix=/app .
+      - install -Dm644 data/io.github.chamithshehan.CaptureViewer.desktop
+        /app/share/applications/io.github.chamithshehan.CaptureViewer.desktop
+      - install -Dm644 data/io.github.chamithshehan.CaptureViewer.metainfo.xml
+        /app/share/metainfo/io.github.chamithshehan.CaptureViewer.metainfo.xml
+      - install -Dm644 data/icons/io.github.chamithshehan.CaptureViewer.svg
+        /app/share/icons/hicolor/scalable/apps/io.github.chamithshehan.CaptureViewer.svg
+    sources:
+      - type: dir
+        path: ../..
