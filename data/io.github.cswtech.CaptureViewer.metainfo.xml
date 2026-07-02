@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>io.github.chamithshehan.CaptureViewer</id>
+  <id>io.github.cswtech.CaptureViewer</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
   <name>Capture Viewer</name>
@@ -18,7 +18,7 @@
       <li>Distraction-free fullscreen (F11), Settings on F1, volume remembered between runs</li>
     </ul>
   </description>
-  <launchable type="desktop-id">io.github.chamithshehan.CaptureViewer.desktop</launchable>
+  <launchable type="desktop-id">io.github.cswtech.CaptureViewer.desktop</launchable>
   <categories>
     <category>AudioVideo</category>
     <category>Video</category>

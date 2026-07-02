@@ -58,11 +58,11 @@ audio source, or "No audio"). The picture starts immediately.
 ```bash
 flatpak install -y flathub org.gnome.Platform//48 org.gnome.Sdk//48
 flatpak-builder --user --install --force-clean \
-  build-dir build-aux/flatpak/io.github.chamithshehan.CaptureViewer.yaml
-flatpak run io.github.chamithshehan.CaptureViewer
+  build-dir build-aux/flatpak/io.github.cswtech.CaptureViewer.yaml
+flatpak run io.github.cswtech.CaptureViewer
 ```
 
-> **App ID:** `io.github.chamithshehan.CaptureViewer` is a placeholder based on
+> **App ID:** `io.github.cswtech.CaptureViewer` is a placeholder based on
 > a GitHub-pages-style reverse-DNS ID. Rename it (files in `data/`, the manifest,
 > and `APP_ID` in `captureviewer/__init__.py`) to a domain/GitHub account you
 > control before publishing to Flathub.

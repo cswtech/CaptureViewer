@@ -1,4 +1,4 @@
-id: io.github.chamithshehan.CaptureViewer
+id: io.github.cswtech.CaptureViewer
 runtime: org.gnome.Platform
 runtime-version: '48'
 sdk: org.gnome.Sdk
@@ -22,12 +22,12 @@ modules:
     buildsystem: simple
     build-commands:
       - pip3 install --no-deps --no-build-isolation --prefix=/app .
-      - install -Dm644 data/io.github.chamithshehan.CaptureViewer.desktop
-        /app/share/applications/io.github.chamithshehan.CaptureViewer.desktop
-      - install -Dm644 data/io.github.chamithshehan.CaptureViewer.metainfo.xml
-        /app/share/metainfo/io.github.chamithshehan.CaptureViewer.metainfo.xml
-      - install -Dm644 data/icons/io.github.chamithshehan.CaptureViewer.svg
-        /app/share/icons/hicolor/scalable/apps/io.github.chamithshehan.CaptureViewer.svg
+      - install -Dm644 data/io.github.cswtech.CaptureViewer.desktop
+        /app/share/applications/io.github.cswtech.CaptureViewer.desktop
+      - install -Dm644 data/io.github.cswtech.CaptureViewer.metainfo.xml
+        /app/share/metainfo/io.github.cswtech.CaptureViewer.metainfo.xml
+      - install -Dm644 data/icons/io.github.cswtech.CaptureViewer.svg
+        /app/share/icons/hicolor/scalable/apps/io.github.cswtech.CaptureViewer.svg
     sources:
       - type: dir
         path: ../..
