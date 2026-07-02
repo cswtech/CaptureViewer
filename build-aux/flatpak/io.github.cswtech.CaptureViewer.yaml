@@ -11,7 +11,15 @@ finish-args:
   - --share=ipc
   # Audio in (capture source) and out (default sink), via PipeWire/PulseAudio
   - --socket=pulseaudio
-  # Access to /dev/video* capture devices (USB capture cards)
+  # Native PipeWire socket. Required for *video* device discovery: on PipeWire
+  # systems (incl. SteamOS) GStreamer's pipewiredeviceprovider hides the v4l2
+  # provider to avoid duplicates, so without this socket the pipewire provider
+  # can't connect ("Host is down"), v4l2 stays hidden, and GstDeviceMonitor
+  # reports zero Video/Source devices even though /dev/video* is accessible.
+  # PipeWire exposes each capture card with api.v4l2.path=/dev/videoN, so the
+  # app still drives v4l2src directly (no camera-portal session needed).
+  - --filesystem=xdg-run/pipewire-0
+  # Raw access to /dev/video* so v4l2src can open the capture node for streaming.
   - --device=all
 
 modules:
