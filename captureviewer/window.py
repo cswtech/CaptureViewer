@@ -9,11 +9,9 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Gtk, Adw, Gdk, GLib, GObject  # noqa: E402
+from gi.repository import Gtk, Adw, Gdk, GObject  # noqa: E402
 
 from . import APP_NAME
-
-_AUTOHIDE_SECONDS = 3
 
 
 class CaptureWindow(Adw.ApplicationWindow):
@@ -28,7 +26,6 @@ class CaptureWindow(Adw.ApplicationWindow):
         super().__init__(application=application)
         self.set_title(APP_NAME)
         self.set_default_size(1280, 720)
-        self._hide_source = None
         self._syncing = False
 
         self._toolbar_view = Adw.ToolbarView()
@@ -111,11 +108,6 @@ class CaptureWindow(Adw.ApplicationWindow):
 
         self._stack.set_visible_child_name("status")
 
-        # Reveal the header on pointer movement while fullscreen.
-        motion = Gtk.EventControllerMotion()
-        motion.connect("motion", self._on_motion)
-        self._stack.add_controller(motion)
-
     # ------------------------------------------------------------------
     # Public API used by the application
     def set_paintable(self, paintable):
@@ -174,27 +166,8 @@ class CaptureWindow(Adw.ApplicationWindow):
         self._syncing = True
         self._fullscreen_button.set_active(fullscreen)
         self._syncing = False
-        # Hide chrome while fullscreen; motion re-reveals it briefly.
+        # In fullscreen let the video extend under the header so the top bar
+        # can be hidden outright; F11 (leaving fullscreen) is the only way back.
+        self._toolbar_view.set_extend_content_to_top_edge(fullscreen)
         self._toolbar_view.set_reveal_top_bars(not fullscreen)
-        self._cancel_autohide()
         self.emit("fullscreen-changed", fullscreen)
-
-    def _on_motion(self, *_):
-        if not self.is_fullscreen():
-            return
-        self._toolbar_view.set_reveal_top_bars(True)
-        self._cancel_autohide()
-        self._hide_source = GLib.timeout_add_seconds(
-            _AUTOHIDE_SECONDS, self._autohide
-        )
-
-    def _autohide(self):
-        self._hide_source = None
-        if self.is_fullscreen():
-            self._toolbar_view.set_reveal_top_bars(False)
-        return GLib.SOURCE_REMOVE
-
-    def _cancel_autohide(self):
-        if self._hide_source is not None:
-            GLib.source_remove(self._hide_source)
-            self._hide_source = None

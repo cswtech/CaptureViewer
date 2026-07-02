@@ -90,7 +90,7 @@ class CaptureViewerApp(Adw.Application):
             self._open_settings()
 
     def _install_window_shortcuts(self):
-        # F11 toggles fullscreen; Escape leaves it.
+        # F11 is the only way to toggle fullscreen; Escape quits the app.
         toggle = Gio.SimpleAction.new("toggle-fullscreen", None)
         toggle.connect(
             "activate",
@@ -99,10 +99,7 @@ class CaptureViewerApp(Adw.Application):
         self._window.add_action(toggle)
         self.set_accels_for_action("win.toggle-fullscreen", ["F11"])
 
-        leave = Gio.SimpleAction.new("leave-fullscreen", None)
-        leave.connect("activate", lambda *_: self._window.apply_fullscreen(False))
-        self._window.add_action(leave)
-        self.set_accels_for_action("win.leave-fullscreen", ["Escape"])
+        self.set_accels_for_action("app.quit", ["<Primary>q", "Escape"])
 
     # ------------------------------------------------------------------
     # Settings
