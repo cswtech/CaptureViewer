@@ -139,6 +139,30 @@ if [[ "$missing" -ne 0 ]]; then
   exit 1
 fi
 
+echo "== pruning host-provided graphics/driver libraries =="
+# These libraries are tightly bound to the *target* machine's GPU userspace
+# driver (the Mesa DRI/Vulkan driver, loaded via dlopen so it never shows up in
+# ldd), the kernel DRM interface and the compositor. Bundling the build
+# machine's copies means the target loads *its own* DRI driver through *our*
+# mismatched libgbm/libdrm/libEGL — which silently fails to allocate GPU
+# buffers. In a normal desktop session GTK falls back to software rendering so
+# you still see a window, but SteamOS Gaming Mode (gamescope) requires the
+# client to hand it GBM/dmabuf buffers that match the host driver, so the
+# window renders black / never appears. Ship none of these; every graphical
+# host already provides matching copies, which the loader picks up from the
+# system path at runtime.
+PRUNE=(
+  'libGL.so*' 'libGLX.so*' 'libGLdispatch.so*' 'libOpenGL.so*'
+  'libEGL.so*' 'libGLESv2.so*' 'libglapi.so*'
+  'libgbm.so*' 'libdrm.so*'
+  'libvulkan.so*'
+  'libwayland-egl.so*'
+  'libva.so*' 'libva-drm.so*' 'libva-x11.so*' 'libvdpau.so*'
+)
+for pat in "${PRUNE[@]}"; do
+  find "$LIBDIR" -maxdepth 1 -name "$pat" -print -delete
+done
+
 echo "== writing AppRun =="
 cat > "$APPDIR/AppRun" <<'APPRUN'
 #!/usr/bin/env bash

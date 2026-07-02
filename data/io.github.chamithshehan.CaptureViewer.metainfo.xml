@@ -15,7 +15,7 @@
       <li>Pick the video capture device and audio source in Settings</li>
       <li>Low-latency live preview via GStreamer and a GTK4 paintable</li>
       <li>Automatic reconnect when the capture card is unplugged and replugged</li>
-      <li>Fullscreen toggle (F11) and volume control, remembered between runs</li>
+      <li>Distraction-free fullscreen (F11), Settings on F1, volume remembered between runs</li>
     </ul>
   </description>
   <launchable type="desktop-id">io.github.chamithshehan.CaptureViewer.desktop</launchable>
@@ -25,6 +25,11 @@
   </categories>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.1.1" date="2026-07-02">
+      <description>
+        <p>Fullscreen now hides the top bar immediately (F11 toggles it, Esc quits), F1 opens Settings, and the AppImage no longer bundles the host GPU driver stack so it runs under SteamOS Gaming Mode (gamescope).</p>
+      </description>
+    </release>
     <release version="0.1.0" date="2026-07-01">
       <description>
         <p>Initial release.</p>

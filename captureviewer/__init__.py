@@ -2,4 +2,4 @@
 
 APP_ID = "io.github.chamithshehan.CaptureViewer"
 APP_NAME = "Capture Viewer"
-VERSION = "0.1.0"
+VERSION = "0.1.1"

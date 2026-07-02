@@ -14,9 +14,22 @@ Built with **Python + PyGObject (GTK4 / libadwaita)** and **GStreamer**
 - Low-latency live preview (leaky queues drop stale frames)
 - Audio routed to your **default output** with a volume control
 - **Hotplug aware** — auto-reconnects when the capture card is replugged
-- **F11** fullscreen (chrome auto-hides; move the mouse or press **Esc** to leave)
+- **Distraction-free fullscreen** — the top bar hides instantly with no
+  mouse-triggered reveal, ideal for a dedicated monitor
 - Settings persisted in `~/.config/captureviewer/config.json`, keyed by stable
   device identifiers so devices are re-matched correctly across reboots
+
+### Keyboard shortcuts
+
+| Key | Action |
+| --- | --- |
+| **F1** or **Ctrl+,** | Open Settings |
+| **F11** | Toggle fullscreen (the *only* way in or out) |
+| **Esc** | Quit the app immediately |
+| **Ctrl+Q** | Quit |
+
+In fullscreen the header hides immediately and stays hidden — press **F11**
+again to bring it back. **Esc** closes the app.
 
 ## 1. Install dependencies
 
@@ -81,6 +94,12 @@ chmod +x CaptureViewer-x86_64.AppImage
 ./CaptureViewer-x86_64.AppImage --appimage-extract-and-run
 ```
 
+The GPU/driver stack (`libGL`, `libEGL`, `libgbm`, `libdrm`, `libvulkan`,
+VA-API/VDPAU) is **deliberately not bundled** — those are coupled to the target
+machine's Mesa/kernel driver and are provided by the host at runtime. Bundling
+the build machine's copies breaks GPU buffer sharing on other systems, most
+visibly under SteamOS Gaming Mode (gamescope). See Troubleshooting.
+
 **Portability:** the AppImage requires a target glibc at least as new as the
 build machine's — it will *not* run on distros noticeably older than the one
 it was built on. Build on the oldest common distro you can reasonably target
@@ -95,6 +114,20 @@ machine produces an AppImage that only runs on similarly recent systems.
   that automatically, but check `gst-launch-1.0 v4l2src ! decodebin ! videoconvert ! gtk4paintablesink`.
 - **No audio:** the capture card's audio shows up as a separate *source*; pick it
   under Settings → Audio. Output always goes to the system default sink.
+- **SteamOS Gaming Mode (gamescope) — black window / doesn't appear:** the
+  AppImage must **not** bundle the GPU/driver stack (`libGL`, `libEGL`,
+  `libgbm`, `libdrm`, `libvulkan`, …). gamescope requires the app to hand it
+  GBM/dmabuf buffers that match the *host* Mesa/Vulkan driver, so those
+  libraries have to come from the target machine, not the build machine. The
+  build script prunes them for exactly this reason — make sure you're running
+  an AppImage built after that change. If a window still fails to appear,
+  launch it from a terminal (Desktop Mode → Konsole, or SSH) to see the error,
+  and as a fallback try forcing software/GL rendering or Xwayland:
+
+  ```bash
+  GSK_RENDERER=gl ./CaptureViewer-x86_64.AppImage      # avoid the Vulkan renderer
+  GDK_BACKEND=x11 ./CaptureViewer-x86_64.AppImage      # run via Xwayland
+  ```
 
 ## Project layout
 

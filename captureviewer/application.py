@@ -54,7 +54,7 @@ class CaptureViewerApp(Adw.Application):
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
         )
 
-        self._add_action("settings", self._on_settings_action, ["<Primary>comma"])
+        self._add_action("settings", self._on_settings_action, ["<Primary>comma", "F1"])
         self._add_action("about", self._on_about_action)
         self._add_action("quit", lambda *_: self.quit(), ["<Primary>q"])
 
