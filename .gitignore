@@ -10,6 +10,8 @@ dist/
 .flatpak-builder/
 repo/
 build-dir/
+build-aux/flatpak/build/
+build-aux/flatpak/out/
 
 # AppImage build artifacts
 build-aux/appimage/AppDir/

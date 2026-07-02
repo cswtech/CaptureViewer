@@ -56,7 +56,7 @@ audio source, or "No audio"). The picture starts immediately.
 ## 3. Build the Flatpak
 
 ```bash
-flatpak install -y flathub org.gnome.Platform//48 org.gnome.Sdk//48
+flatpak install -y flathub org.gnome.Platform//50 org.gnome.Sdk//50
 flatpak-builder --user --install --force-clean \
   build-dir build-aux/flatpak/io.github.cswtech.CaptureViewer.yaml
 flatpak run io.github.cswtech.CaptureViewer
@@ -67,9 +67,47 @@ flatpak run io.github.cswtech.CaptureViewer
 > and `APP_ID` in `captureviewer/__init__.py`) to a domain/GitHub account you
 > control before publishing to Flathub.
 >
-> **gtk4paintablesink in Flatpak:** the GNOME 48 runtime ships it. If
-> `gst-inspect-1.0 gtk4paintablesink` fails inside the sandbox, add a
-> `gst-plugin-gtk4` build module to the manifest.
+> **gtk4paintablesink in Flatpak:** the GNOME 50 runtime ships it (verified,
+> along with `v4l2src` and `pipewiresrc`). If `gst-inspect-1.0 gtk4paintablesink`
+> ever fails inside the sandbox, add a `gst-plugin-gtk4` build module to the
+> manifest.
+
+### Sideload onto SteamOS (Steam Deck)
+
+SteamOS has an immutable root filesystem (no native packages) and its Gaming
+Mode compositor (gamescope) rejects mismatched GPU driver libraries — the two
+things that make an AppImage painful there. A Flatpak avoids both: the app runs
+against the GNOME runtime and picks up the Deck's own Mesa/Vulkan driver through
+the `org.freedesktop.Platform.GL` extension, so it renders correctly in Desktop
+*and* Gaming Mode. Since publishing to Flathub isn't an option here, ship it as a
+**single-file bundle** and sideload it:
+
+```bash
+./build-aux/flatpak/build-flatpak.sh
+# -> build-aux/flatpak/out/CaptureViewer.flatpak
+```
+
+Then, on the Steam Deck (**Desktop Mode**):
+
+1. Copy `CaptureViewer.flatpak` over (USB stick, `scp`, or Warpinator).
+2. Install it — the GNOME runtime is pulled from Flathub (preinstalled on the
+   Deck) the first time:
+
+   ```bash
+   flatpak install --user ./CaptureViewer.flatpak
+   flatpak run io.github.cswtech.CaptureViewer   # test in Desktop Mode first
+   ```
+
+3. Add it to your library so it shows up in Gaming Mode: Steam → **Add a
+   Non-Steam Game** → **Browse** → enable "All Files" → point it at
+   `/usr/bin/flatpak`, then set the launch options to
+   `run io.github.cswtech.CaptureViewer`. (Or install
+   [Flatseal](https://flathub.org/apps/com.github.tchx84.Flatseal) / a launcher
+   that adds Flatpak apps to Steam automatically.)
+
+The bundle is app-only; the ~300 MB GNOME runtime downloads once from Flathub
+and is shared with every other Flatpak on the Deck. Updates are a matter of
+rebuilding the bundle and re-running `flatpak install --user` on it.
 
 ## 4. Build a single-file AppImage
 
