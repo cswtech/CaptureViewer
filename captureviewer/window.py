@@ -5,6 +5,8 @@ The window is mostly presentational. It emits signals ('settings-requested',
 wires to pipeline/config actions.
 """
 
+import os
+
 import gi
 
 gi.require_version("Gtk", "4.0")
@@ -12,6 +14,19 @@ gi.require_version("Adw", "1")
 from gi.repository import Gtk, Adw, Gdk, GObject  # noqa: E402
 
 from . import APP_NAME
+
+
+def _in_gaming_mode() -> bool:
+    """True when running under SteamOS Gaming Mode / gamescope.
+
+    gamescope always draws the focused window filling the screen, but it does
+    not set GTK's 'fullscreened' state, so our fullscreen-driven chrome hiding
+    never triggers and the header bar stays on top of the video. Detecting the
+    compositor lets us hide the chrome outright.
+    """
+    if os.environ.get("GAMESCOPE_WAYLAND_DISPLAY"):
+        return True
+    return "gamescope" in os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
 
 
 class CaptureWindow(Adw.ApplicationWindow):
@@ -27,6 +42,7 @@ class CaptureWindow(Adw.ApplicationWindow):
         self.set_title(APP_NAME)
         self.set_default_size(1280, 720)
         self._syncing = False
+        self._gaming_mode = _in_gaming_mode()
 
         self._toolbar_view = Adw.ToolbarView()
         self.set_content(self._toolbar_view)
@@ -37,6 +53,8 @@ class CaptureWindow(Adw.ApplicationWindow):
         # Keep the fullscreen button and top-bar visibility in sync with the
         # real window state (Esc, WM shortcuts, etc. also change it).
         self.connect("notify::fullscreened", self._on_fullscreen_state)
+        # Apply the initial chrome state so gamescope launches start hidden.
+        self._apply_chrome()
 
     # ------------------------------------------------------------------
     def _build_header(self, initial_volume):
@@ -162,12 +180,17 @@ class CaptureWindow(Adw.ApplicationWindow):
         self.emit("volume-changed", value)
 
     def _on_fullscreen_state(self, *_):
-        fullscreen = self.is_fullscreen()
+        self._apply_chrome()
+        self.emit("fullscreen-changed", self.is_fullscreen())
+
+    def _apply_chrome(self):
+        # Hide the header when genuinely fullscreen, or always under gamescope
+        # (Steam Gaming Mode), which fullscreens us without setting GTK's
+        # fullscreen state. Extending the content under the top bar lets it be
+        # hidden outright; F11 (leaving fullscreen) is the only way back.
+        hidden = self.is_fullscreen() or self._gaming_mode
         self._syncing = True
-        self._fullscreen_button.set_active(fullscreen)
+        self._fullscreen_button.set_active(hidden)
         self._syncing = False
-        # In fullscreen let the video extend under the header so the top bar
-        # can be hidden outright; F11 (leaving fullscreen) is the only way back.
-        self._toolbar_view.set_extend_content_to_top_edge(fullscreen)
-        self._toolbar_view.set_reveal_top_bars(not fullscreen)
-        self.emit("fullscreen-changed", fullscreen)
+        self._toolbar_view.set_extend_content_to_top_edge(hidden)
+        self._toolbar_view.set_reveal_top_bars(not hidden)

@@ -20,6 +20,12 @@ _CSS = b"""
 .capture-surface { background-color: black; }
 """
 
+# Many USB/HDMI capture cards expose their video and audio as one physical
+# device, and opening the V4L2 video node resets the card's USB audio
+# interface. Grabbing the audio source in the same instant then yields a silent
+# stream, so we let the card settle before starting audio on launch/hot-plug.
+_AUDIO_START_DELAY_MS = 1000
+
 
 class CaptureViewerApp(Adw.Application):
     def __init__(self):
@@ -35,6 +41,7 @@ class CaptureViewerApp(Adw.Application):
         self._video_active = False
         self._audio_active = False
         self._save_source = None
+        self._audio_start_source = None
 
         self._video.connect("error", self._on_pipeline_error)
         self._audio.connect("error", self._on_audio_error)
@@ -146,7 +153,7 @@ class CaptureViewerApp(Adw.Application):
         if audio_id:
             audio_device = self._devices.find_device(audio_id)
             if audio_device is not None:
-                self._start_audio(audio_device)
+                self._schedule_audio_start(audio_device)
 
     def _start_video(self, device):
         try:
@@ -162,7 +169,30 @@ class CaptureViewerApp(Adw.Application):
         self._window.show_video()
         self._window.set_playing(True)
 
+    def _schedule_audio_start(self, device):
+        """Start audio a beat after video so the capture card can settle.
+
+        Starting immediately alongside video produces a silent stream on many
+        cards; the only previous workaround was to re-pick the same source in
+        Settings once the card had warmed up. See _AUDIO_START_DELAY_MS.
+        """
+        self._cancel_audio_start()
+        self._audio_start_source = GLib.timeout_add(
+            _AUDIO_START_DELAY_MS, self._fire_audio_start, device
+        )
+
+    def _fire_audio_start(self, device):
+        self._audio_start_source = None
+        self._start_audio(device)
+        return GLib.SOURCE_REMOVE
+
+    def _cancel_audio_start(self):
+        if self._audio_start_source is not None:
+            GLib.source_remove(self._audio_start_source)
+            self._audio_start_source = None
+
     def _start_audio(self, device):
+        self._cancel_audio_start()
         try:
             self._audio.build(
                 device,
@@ -177,6 +207,7 @@ class CaptureViewerApp(Adw.Application):
         self._audio_active = True
 
     def _stop_audio(self):
+        self._cancel_audio_start()
         self._audio.stop()
         self._audio_active = False
 
@@ -231,11 +262,11 @@ class CaptureViewerApp(Adw.Application):
                 if audio_id and not self._audio_active:
                     audio_device = self._devices.find_device(audio_id)
                     if audio_device is not None:
-                        self._start_audio(audio_device)
+                        self._schedule_audio_start(audio_device)
         elif ident["klass"] == "audio" and not self._audio_active:
             saved = self._config.get("audio_device")
             if saved and _match_score(saved, device) > 0 and self._video_active:
-                self._start_audio(device)
+                self._schedule_audio_start(device)
 
     def _on_device_removed(self, _manager, device):
         ident = device_identity(device)
