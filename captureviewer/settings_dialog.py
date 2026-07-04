@@ -38,9 +38,9 @@ class SettingsDialog(Adw.Dialog):
         header = Adw.HeaderBar()
         toolbar_view.add_top_bar(header)
 
-        cancel = Gtk.Button(label="Cancel")
-        cancel.connect("clicked", lambda *_: self.close())
-        header.pack_start(cancel)
+        self._cancel_button = Gtk.Button(label="Cancel")
+        self._cancel_button.connect("clicked", lambda *_: self.close())
+        header.pack_start(self._cancel_button)
 
         self._apply_button = Gtk.Button(label="Apply")
         self._apply_button.add_css_class("suggested-action")
@@ -136,3 +136,58 @@ class SettingsDialog(Adw.Dialog):
         if self._devices_handler is not None:
             self._devices.disconnect(self._devices_handler)
             self._devices_handler = None
+
+    # ------------------------------------------------------------------
+    # Game controller navigation (see gamepad.py). The dialog is driven purely
+    # from its own known widgets — combo rows plus Apply/Cancel — so navigation
+    # is predictable without fighting GTK dropdown popovers: up/down moves the
+    # highlight between fields, left/right changes the highlighted device, A
+    # applies (or clicks the highlighted button) and B cancels.
+    def _nav_controls(self):
+        controls = [self._video_row, self._audio_row]
+        if self._apply_button.get_sensitive():
+            controls.append(self._apply_button)
+        controls.append(self._cancel_button)
+        return [c for c in controls if c.get_sensitive()]
+
+    def _focused_index(self, controls):
+        widget = self.get_focus()
+        while widget is not None:
+            if widget in controls:
+                return controls.index(widget)
+            widget = widget.get_parent()
+        return -1
+
+    def gamepad_direction(self, direction):
+        if direction in ("up", "down"):
+            controls = self._nav_controls()
+            if not controls:
+                return
+            index = self._focused_index(controls)
+            if index == -1:
+                index = 0
+            else:
+                step = 1 if direction == "down" else -1
+                index = (index + step) % len(controls)
+            controls[index].grab_focus()
+        else:  # left / right — change the highlighted combo's selection
+            controls = self._nav_controls()
+            index = self._focused_index(controls)
+            control = controls[index] if 0 <= index < len(controls) else None
+            if isinstance(control, Adw.ComboRow):
+                model = control.get_model()
+                count = model.get_n_items() if model is not None else 0
+                if count:
+                    step = 1 if direction == "right" else -1
+                    control.set_selected(
+                        max(0, min(count - 1, control.get_selected() + step))
+                    )
+
+    def gamepad_button(self, name):
+        if name == "b":
+            self.close()
+        elif name == "a":
+            if self.get_focus() is self._cancel_button:
+                self.close()
+            else:
+                self._on_apply()

@@ -12,6 +12,7 @@ from gi.repository import Gtk, Adw, Gst, Gio, GLib, Gdk  # noqa: E402
 from . import APP_ID, APP_NAME, VERSION
 from .config import Config
 from .devices import DeviceManager, device_identity, _match_score
+from .gamepad import GamepadManager
 from .pipeline import VideoPipeline, AudioPipeline
 from .settings_dialog import SettingsDialog
 from .window import CaptureWindow
@@ -26,6 +27,10 @@ _CSS = b"""
 # stream, so we let the card settle before starting audio on launch/hot-plug.
 _AUDIO_START_DELAY_MS = 1000
 
+# How much a single controller press (or one auto-repeat tick) moves the
+# volume; matches the volume slider's step increment.
+_VOLUME_STEP = 0.05
+
 
 class CaptureViewerApp(Adw.Application):
     def __init__(self):
@@ -38,6 +43,8 @@ class CaptureViewerApp(Adw.Application):
         self._video = VideoPipeline()
         self._audio = AudioPipeline()
         self._window = None
+        self._settings_dialog = None
+        self._gamepad = GamepadManager()
         self._video_active = False
         self._audio_active = False
         self._save_source = None
@@ -84,6 +91,13 @@ class CaptureViewerApp(Adw.Application):
 
             self._install_window_shortcuts()
 
+            # Drive the whole UI from a game controller (Steam Gaming Mode /
+            # gamescope has no keyboard or mouse). No-op if libmanette is
+            # unavailable, e.g. a bare host run outside the Flatpak runtime.
+            self._gamepad.connect("button", self._on_gamepad_button)
+            self._gamepad.connect("direction", self._on_gamepad_direction)
+            self._gamepad.start()
+
         self._window.present()
         self._window.apply_fullscreen(bool(self._config.get("fullscreen")))
 
@@ -111,10 +125,44 @@ class CaptureViewerApp(Adw.Application):
     # ------------------------------------------------------------------
     # Settings
     def _open_settings(self):
+        if self._settings_dialog is not None:
+            return
         dialog = SettingsDialog(self._devices, self._config)
         dialog.connect("video-selected", self._on_video_selected)
         dialog.connect("audio-selected", self._on_audio_selected)
+        dialog.connect("closed", self._on_settings_closed)
+        self._settings_dialog = dialog
         dialog.present(self._window)
+
+    def _on_settings_closed(self, *_):
+        self._settings_dialog = None
+
+    # ------------------------------------------------------------------
+    # Game controller input. When the settings dialog is open it consumes all
+    # input (menu navigation); otherwise buttons drive the header controls.
+    def _on_gamepad_button(self, _manager, name):
+        if self._settings_dialog is not None:
+            self._settings_dialog.gamepad_button(name)
+            return
+        if name == "a":
+            self._window.toggle_play()
+        elif name == "start":
+            self._open_settings()
+        elif name == "y":
+            self._window.toggle_fullscreen()
+        elif name == "rb":
+            self._window.adjust_volume(_VOLUME_STEP)
+        elif name == "lb":
+            self._window.adjust_volume(-_VOLUME_STEP)
+
+    def _on_gamepad_direction(self, _manager, direction):
+        if self._settings_dialog is not None:
+            self._settings_dialog.gamepad_direction(direction)
+            return
+        if direction == "up":
+            self._window.adjust_volume(_VOLUME_STEP)
+        elif direction == "down":
+            self._window.adjust_volume(-_VOLUME_STEP)
 
     def _on_settings_action(self, *_):
         if self._window:

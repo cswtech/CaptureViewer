@@ -163,6 +163,21 @@ class CaptureWindow(Adw.ApplicationWindow):
             self.unfullscreen()
 
     # ------------------------------------------------------------------
+    # Controller-driven equivalents of the header controls. These flip the
+    # relevant widget so the normal 'toggled'/'value-changed' handlers run,
+    # keeping the button state, emitted signals and persistence identical to a
+    # mouse click.
+    def toggle_play(self):
+        self._play_button.set_active(not self._play_button.get_active())
+
+    def toggle_fullscreen(self):
+        self.apply_fullscreen(not self.is_fullscreen())
+
+    def adjust_volume(self, delta):
+        value = min(1.0, max(0.0, self._volume_button.get_value() + delta))
+        self._volume_button.set_value(value)
+
+    # ------------------------------------------------------------------
     # Signal handlers
     def _on_play_toggled(self, button):
         if self._syncing:

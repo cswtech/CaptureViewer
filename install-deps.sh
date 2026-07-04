@@ -10,6 +10,7 @@ PACKAGES=(
   gir1.2-adw-1
   gir1.2-gstreamer-1.0
   gir1.2-gst-plugins-base-1.0
+  gir1.2-manette-0.2            # game controller support (libmanette)
   # GStreamer core + plugins
   gstreamer1.0-tools
   gstreamer1.0-plugins-base

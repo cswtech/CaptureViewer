@@ -16,6 +16,7 @@
       <li>Low-latency live preview via GStreamer and a GTK4 paintable</li>
       <li>Automatic reconnect when the capture card is unplugged and replugged</li>
       <li>Distraction-free fullscreen (F11), Settings on F1, volume remembered between runs</li>
+      <li>Full game controller support for SteamOS Gaming Mode / gamescope</li>
     </ul>
   </description>
   <launchable type="desktop-id">io.github.cswtech.CaptureViewer.desktop</launchable>
@@ -25,6 +26,11 @@
   </categories>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="0.1.2" date="2026-07-04">
+      <description>
+        <p>Added full game controller support: every action — play/stop, Settings, volume, fullscreen and device selection — is now drivable from a gamepad for use in SteamOS Gaming Mode (gamescope), read via libmanette.</p>
+      </description>
+    </release>
     <release version="0.1.1" date="2026-07-02">
       <description>
         <p>Fullscreen now hides the top bar immediately (F11 toggles it, Esc quits), F1 opens Settings, and the AppImage no longer bundles the host GPU driver stack so it runs under SteamOS Gaming Mode (gamescope).</p>

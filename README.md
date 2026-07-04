@@ -16,6 +16,9 @@ Built with **Python + PyGObject (GTK4 / libadwaita)** and **GStreamer**
 - **Hotplug aware** — auto-reconnects when the capture card is replugged
 - **Distraction-free fullscreen** — the top bar hides instantly with no
   mouse-triggered reveal, ideal for a dedicated monitor
+- **Full game controller support** — every action (play/stop, Settings, volume,
+  fullscreen, device selection) is drivable from a gamepad, so it's usable in
+  SteamOS Gaming Mode / gamescope where there's no keyboard or mouse
 - Settings persisted in `~/.config/captureviewer/config.json`, keyed by stable
   device identifiers so devices are re-matched correctly across reboots
 
@@ -30,6 +33,29 @@ Built with **Python + PyGObject (GTK4 / libadwaita)** and **GStreamer**
 
 In fullscreen the header hides immediately and stays hidden — press **F11**
 again to bring it back. **Esc** closes the app.
+
+### Game controller
+
+Designed for SteamOS Gaming Mode / gamescope, where there's no keyboard or
+mouse — the entire UI can be driven from a connected controller:
+
+| Button | Video view | Settings dialog |
+| --- | --- | --- |
+| **A** | Play / Stop | Apply (or press the highlighted button) |
+| **B** | — | Cancel / close |
+| **Y** | Toggle fullscreen | — |
+| **☰ Menu** (Start) | Open Settings | — |
+| **D-pad ↑ / ↓** | Volume up / down | Move between fields |
+| **D-pad ← / →** | — | Change the highlighted device / option |
+| **RB / LB** | Volume up / down | — |
+
+The **left analog stick mirrors the D-pad** in both contexts. The **Guide**
+button is intentionally left to Steam, and Quit is not bound to a button to
+avoid accidental exits (use Steam's Guide button, or **Ctrl+Q** / **Esc** with a
+keyboard). Controllers are read via **libmanette**, which ships in the GNOME
+runtime the Flatpak uses; for a source run, `install-deps.sh` pulls
+`gir1.2-manette-0.2`. If libmanette is absent the app runs normally, just
+without controller input.
 
 ## 1. Install dependencies
 
@@ -174,6 +200,7 @@ captureviewer/
   application.py     # Adw.Application: wires everything together
   window.py          # main window, header controls, fullscreen
   settings_dialog.py # device pickers (Adw.PreferencesDialog)
+  gamepad.py         # game controller input (libmanette)
   devices.py         # GstDeviceMonitor + stable device identity/matching
   pipeline.py        # video + audio GStreamer pipelines
   config.py          # JSON config in ~/.config/captureviewer/
