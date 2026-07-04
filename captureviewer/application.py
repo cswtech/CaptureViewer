@@ -21,11 +21,12 @@ _CSS = b"""
 .capture-surface { background-color: black; }
 """
 
-# Many USB/HDMI capture cards expose their video and audio as one physical
-# device, and opening the V4L2 video node resets the card's USB audio
-# interface. Grabbing the audio source in the same instant then yields a silent
-# stream, so we let the card settle before starting audio on launch/hot-plug.
-_AUDIO_START_DELAY_MS = 1000
+# A capture card's audio node can appear a beat after its video node and take a
+# moment to expose the stable properties we match on, so at the very first
+# instant of startup the saved source may not be identifiable yet (or a
+# transient collision could match the wrong device). We therefore resolve and
+# start audio from a short timeout, once device enumeration has settled.
+_AUDIO_START_DELAY_MS = 750
 
 # How much a single controller press (or one auto-repeat tick) moves the
 # volume; matches the volume slider's step increment.
@@ -197,11 +198,8 @@ class CaptureViewerApp(Adw.Application):
             return
         self._start_video(video_device)
 
-        audio_id = self._config.get("audio_device")
-        if audio_id:
-            audio_device = self._devices.find_device(audio_id)
-            if audio_device is not None:
-                self._schedule_audio_start(audio_device)
+        if self._config.get("audio_device"):
+            self._schedule_audio_start()
 
     def _start_video(self, device):
         try:
@@ -217,21 +215,26 @@ class CaptureViewerApp(Adw.Application):
         self._window.show_video()
         self._window.set_playing(True)
 
-    def _schedule_audio_start(self, device):
-        """Start audio a beat after video so the capture card can settle.
+    def _schedule_audio_start(self):
+        """(Re)start the saved audio source once enumeration has settled.
 
-        Starting immediately alongside video produces a silent stream on many
-        cards; the only previous workaround was to re-pick the same source in
-        Settings once the card had warmed up. See _AUDIO_START_DELAY_MS.
+        The device is resolved when the timeout fires, not now, so we match
+        against fully-populated device properties and pick the right source
+        rather than whatever happens to match at the first startup instant.
+        See _AUDIO_START_DELAY_MS.
         """
         self._cancel_audio_start()
         self._audio_start_source = GLib.timeout_add(
-            _AUDIO_START_DELAY_MS, self._fire_audio_start, device
+            _AUDIO_START_DELAY_MS, self._fire_audio_start
         )
 
-    def _fire_audio_start(self, device):
+    def _fire_audio_start(self):
         self._audio_start_source = None
-        self._start_audio(device)
+        audio_id = self._config.get("audio_device")
+        if audio_id:
+            device = self._devices.find_device(audio_id)
+            if device is not None:
+                self._start_audio(device)
         return GLib.SOURCE_REMOVE
 
     def _cancel_audio_start(self):
@@ -306,15 +309,12 @@ class CaptureViewerApp(Adw.Application):
             if saved and _match_score(saved, device) > 0:
                 self._start_video(device)
                 # Bring audio back too if its device is present.
-                audio_id = self._config.get("audio_device")
-                if audio_id and not self._audio_active:
-                    audio_device = self._devices.find_device(audio_id)
-                    if audio_device is not None:
-                        self._schedule_audio_start(audio_device)
+                if self._config.get("audio_device") and not self._audio_active:
+                    self._schedule_audio_start()
         elif ident["klass"] == "audio" and not self._audio_active:
             saved = self._config.get("audio_device")
             if saved and _match_score(saved, device) > 0 and self._video_active:
-                self._schedule_audio_start(device)
+                self._schedule_audio_start()
 
     def _on_device_removed(self, _manager, device):
         ident = device_identity(device)

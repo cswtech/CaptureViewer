@@ -11,22 +11,21 @@ import gi
 gi.require_version("Gst", "1.0")
 from gi.repository import Gst, GLib, GObject  # noqa: E402
 
-# Properties we prefer for stable matching across reboots / re-plugs.
-# Ordered roughly by how stable they are.
+# Properties used to match a saved device against the connected ones across
+# reboots / re-plugs. These MUST be stable per physical device: volatile keys
+# such as the PipeWire ``object.serial`` (a per-session counter) or the ALSA
+# ``api.alsa.path`` / ``/dev/videoN`` path (depends on enumeration order) are
+# deliberately excluded — they get reassigned to *different* devices between
+# sessions and cause a saved source to match the wrong hardware.
 _VIDEO_KEYS = [
     "api.v4l2.cap.bus_info",  # e.g. usb-0000:00:14.0-9 (stable per USB port)
     "device.bus_info",
-    "node.name",              # v4l2_input.pci-...-usb-0_9_1.0 (stable-ish)
-    "object.path",            # v4l2:/dev/video0
-    "api.v4l2.path",          # /dev/videoN (least stable, good fallback)
-    "device.path",
+    "node.name",              # v4l2_input.pci-...-usb-0_9_1.0 (stable per port)
 ]
 _AUDIO_KEYS = [
-    "node.name",           # PipeWire node name
-    "object.serial",
-    "alsa.card_name",
-    "api.alsa.path",
-    "device.bus_path",
+    "node.name",           # alsa_input.usb-<product>...  (stable per product)
+    "alsa.card_name",      # e.g. USB Device 0x345f:0x2109
+    "device.bus_path",     # USB port path
     "device.description",
 ]
 
